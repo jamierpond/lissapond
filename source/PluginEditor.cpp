@@ -2,7 +2,7 @@
 #include "PluginProcessor.h"
 
 PluginEditor::PluginEditor(MyPluginProcessor &p)
-    : AudioProcessorEditor(&p),  display(p)
+    : AudioProcessorEditor(&p), display(p)
 , audio_processor(p)
 {
     setResizable(true, true);
@@ -16,7 +16,6 @@ PluginEditor::~PluginEditor()
 }
 
 void PluginEditor::paint(juce::Graphics &g) {
-  g.fillAll(juce::Colours::black);
 }
 
 void PluginEditor::resized()

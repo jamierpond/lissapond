@@ -1,15 +1,12 @@
 #pragma once
 
 #include "PluginProcessor.h"
-#include <juce_opengl/juce_opengl.h>
 
 struct LissDisplay : juce::Component, juce::Timer {
-  juce::OpenGLContext openGLContext;
 
   LissDisplay(MyPluginProcessor& p) : audio_processor(p) {
-    openGLContext.attachTo(*this);
     setOpaque(true);
-    startTimerHz(60);
+    startTimerHz(30);
 
     auto setup_slider = [this] (juce::Slider& slider, juce::String name, double init_value = 0.5) {
       slider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
@@ -48,7 +45,6 @@ struct LissDisplay : juce::Component, juce::Timer {
 
   ~LissDisplay() {
     stopTimer();
-    openGLContext.detach();
   }
 
     float
@@ -104,24 +100,21 @@ struct LissDisplay : juce::Component, juce::Timer {
       return;
     }
 
+
     float rows = image->getWidth();
     float cols = image->getHeight();
     auto ratio = 0.5f;
 
     // loop over all pixel and attenuate the colour
-    for (int x = 0; x < rows; ++x) {
-      for (int y = 0; y < cols; ++y) {
-        auto pixel = image->getPixelAt(x, y);
-        auto r = pixel.getRed();
-        auto g = pixel.getGreen();
-        auto b = pixel.getBlue();
-
-        r *= red_decay;
-        g *= green_decay;
-        b *= blue_decay;
-
-        image->setPixelAt(x, y, juce::Colour(r, g, b));
-      }
+    auto data = juce::Image::BitmapData(*image, juce::Image::BitmapData::ReadWriteMode::writeOnly);
+    for (int y=0; y < data.height; ++y) {
+        auto* p = data.getLinePointer (y);
+        for (int x=0; x < data.width; ++x) {
+            auto* pixel = p + x * data.pixelStride;
+            pixel[0] *= blue_decay;
+            pixel[1] *= green_decay;
+            pixel[2] *= red_decay;
+        }
     }
 
     for (int i = 0; i < audio_processor.num_samples_per_block ; ++i) {
@@ -138,10 +131,18 @@ struct LissDisplay : juce::Component, juce::Timer {
       auto radius = dot_size_slider.getValue() * 10;
 
       juce::Colour colour(v, v, v);
+
       for (int dx = -radius; dx < radius; ++dx) {
         for (int dy = -radius; dy < radius; ++dy) {
           if (dx * dx + dy * dy < radius * radius) {
-            image->setPixelAt(x + dx, y + dy, colour);
+            auto px = x + dx;
+            auto py = y + dy;
+            if (px >= 0 && px < rows && py >= 0 && py < cols) {
+              auto* pixel = data.getPixelPointer(px, py);
+              pixel[0] = std::min(255.f, pixel[0] + v * blue_decay * alpha_decay);
+              pixel[1] = std::min(255.f, pixel[1] + v * green_decay * alpha_decay);
+              pixel[2] = std::min(255.f, pixel[2] + v * red_decay * alpha_decay);
+            }
           }
         }
       }
