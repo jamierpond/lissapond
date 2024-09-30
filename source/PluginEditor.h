@@ -2,11 +2,10 @@
 
 #include "PluginProcessor.h"
 
-struct LissDisplay : juce::Component, juce::Timer {
-
+struct LissDisplay final : juce::Component, juce::Timer {
   LissDisplay(MyPluginProcessor& p) : audio_processor(p) {
     setOpaque(true);
-    startTimerHz(30);
+    startTimerHz(60);
 
     auto setup_slider = [this] (juce::Slider& slider, juce::String name, double init_value = 0.5) {
       slider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
@@ -43,7 +42,7 @@ struct LissDisplay : juce::Component, juce::Timer {
     };
   }
 
-  ~LissDisplay() {
+  ~LissDisplay() override {
     stopTimer();
   }
 
@@ -120,17 +119,16 @@ struct LissDisplay : juce::Component, juce::Timer {
     for (int i = 0; i < audio_processor.num_samples_per_block ; ++i) {
       // draw a point for each sample using the left channel as x and the right channel as y
 
+      // TODO LINEARLIZE THIS READ
       auto l = audio_processor.left_buffer.read_back(i);
       auto r = audio_processor.right_buffer.read_back(i);
 
-      float x = l * rows / 2 + rows / 2;
-      float y = r * cols / 2 + cols / 2;
+      float x = l * (rows / 2) + (rows / 2);
+      float y = r * (cols / 2) + (cols / 2);
 
       auto v = 255.f * ((float)i / audio_processor.num_samples_per_block);
 
-      auto radius = dot_size_slider.getValue() * 10;
-
-      juce::Colour colour(v, v, v);
+      auto radius = int(dot_size_slider.getValue() * 10);
 
       for (int dx = -radius; dx < radius; ++dx) {
         for (int dy = -radius; dy < radius; ++dy) {
