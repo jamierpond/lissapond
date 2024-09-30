@@ -111,6 +111,7 @@ target_link_libraries("${PROJECT_NAME}" PRIVATE
         juce::juce_dsp
         juce::juce_events
         juce::juce_graphics
+        juce::juce_opengl
         juce::juce_gui_basics
         juce::juce_gui_extra
         juce::juce_product_unlocking

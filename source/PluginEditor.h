@@ -1,9 +1,13 @@
 #pragma once
 
 #include "PluginProcessor.h"
+#include <juce_opengl/juce_opengl.h>
 
 struct LissDisplay : juce::Component, juce::Timer {
+  juce::OpenGLContext openGLContext;
+
   LissDisplay(MyPluginProcessor& p) : audio_processor(p) {
+    openGLContext.attachTo(*this);
     setOpaque(true);
     startTimerHz(60);
 
@@ -40,6 +44,11 @@ struct LissDisplay : juce::Component, juce::Timer {
     dot_size_slider.onValueChange = [this] {
       dot_size = dot_size_slider.getValue();
     };
+  }
+
+  ~LissDisplay() {
+    stopTimer();
+    openGLContext.detach();
   }
 
     float
@@ -107,10 +116,9 @@ struct LissDisplay : juce::Component, juce::Timer {
         auto g = pixel.getGreen();
         auto b = pixel.getBlue();
 
-        auto ratio = 0.95f;
-        r *= ratio;
-        g *= ratio;
-        b *= ratio;
+        r *= red_decay;
+        g *= green_decay;
+        b *= blue_decay;
 
         image->setPixelAt(x, y, juce::Colour(r, g, b));
       }
@@ -125,15 +133,11 @@ struct LissDisplay : juce::Component, juce::Timer {
       float x = l * rows / 2 + rows / 2;
       float y = r * cols / 2 + cols / 2;
 
-      auto v = (float)i / audio_processor.num_samples_per_block;
-      auto re = std::powf(1.0f - v, red_decay_slider.getValue()) * 255.f;
-      auto gr = std::powf(1.0f - v, green_decay_slider.getValue()) * 255.f;
-      auto bl = std::powf(1.0f - v, blue_decay_slider.getValue()) * 255.f;
-      auto alpha = std::powf(1.0f - v, alpha_decay_slider.getValue()) * 255.f;
+      auto v = 255.f * ((float)i / audio_processor.num_samples_per_block);
 
       auto radius = dot_size_slider.getValue() * 10;
 
-      juce::Colour colour(re, gr, bl, alpha);
+      juce::Colour colour(v, v, v);
       for (int dx = -radius; dx < radius; ++dx) {
         for (int dy = -radius; dy < radius; ++dy) {
           if (dx * dx + dy * dy < radius * radius) {
