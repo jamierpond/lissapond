@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-project(ViatorJuceCMake VERSION 0.0.1)
+project(lissapond VERSION 0.0.1)
 
 # Only check for PkgConfig and GTK3 on non-Windows platforms
 if(NOT WIN32)
@@ -28,11 +28,11 @@ if (UNIX AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 
 # General setup
-set(PROJECT_NAME "ViatorJuceCMake")
+set(PROJECT_NAME "lissapond")
 set(CURRENT_VERSION "0.0.1")
-set(PRODUCT_NAME "ViatorJuceCMake")
+set(PRODUCT_NAME "lissapond")
 set(COMPANY_NAME "yourcompany")
-set(BUNDLE_ID "com.yourcompany.ViatorJuceCMake")
+set(BUNDLE_ID "com.yourcompany.lissapond")
 set(FORMATS Standalone AU VST3)
 
 # Disable all warnings
@@ -86,7 +86,7 @@ target_compile_definitions(SharedCode INTERFACE
         CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
         VERSION="${CURRENT_VERSION}"
         JUCE_DISPLAY_SPLASH_SCREEN=0
-        PRODUCT_NAME_WITHOUT_VERSION="ViatorJuceCMake"
+        PRODUCT_NAME_WITHOUT_VERSION="lissapond"
 )
 
 # Add sources to the main project

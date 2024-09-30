@@ -1,8 +1,9 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+
 //==============================================================================
-PluginProcessor::PluginProcessor()
+MyPluginProcessor::MyPluginProcessor()
     : AudioProcessor(BusesProperties()
 #if !JucePlugin_IsMidiEffect
 #if !JucePlugin_IsSynth
@@ -12,19 +13,20 @@ PluginProcessor::PluginProcessor()
 #endif
                          )
 {
+
 }
 
-PluginProcessor::~PluginProcessor()
+MyPluginProcessor::~MyPluginProcessor()
 {
 }
 
 //==============================================================================
-const juce::String PluginProcessor::getName() const
+const juce::String MyPluginProcessor::getName() const
 {
     return JucePlugin_Name;
 }
 
-bool PluginProcessor::acceptsMidi() const
+bool MyPluginProcessor::acceptsMidi() const
 {
 #if JucePlugin_WantsMidiInput
     return true;
@@ -33,7 +35,7 @@ bool PluginProcessor::acceptsMidi() const
 #endif
 }
 
-bool PluginProcessor::producesMidi() const
+bool MyPluginProcessor::producesMidi() const
 {
 #if JucePlugin_ProducesMidiOutput
     return true;
@@ -42,7 +44,7 @@ bool PluginProcessor::producesMidi() const
 #endif
 }
 
-bool PluginProcessor::isMidiEffect() const
+bool MyPluginProcessor::isMidiEffect() const
 {
 #if JucePlugin_IsMidiEffect
     return true;
@@ -51,48 +53,48 @@ bool PluginProcessor::isMidiEffect() const
 #endif
 }
 
-double PluginProcessor::getTailLengthSeconds() const
+double MyPluginProcessor::getTailLengthSeconds() const
 {
     return 0.0;
 }
 
-int PluginProcessor::getNumPrograms()
+int MyPluginProcessor::getNumPrograms()
 {
     return 1; // NB: some hosts don't cope very well if you tell them there are 0 programs,
               // so this should be at least 1, even if you're not really implementing programs.
 }
 
-int PluginProcessor::getCurrentProgram()
+int MyPluginProcessor::getCurrentProgram()
 {
     return 0;
 }
 
-void PluginProcessor::setCurrentProgram(int index)
+void MyPluginProcessor::setCurrentProgram(int index)
 {
     juce::ignoreUnused(index);
 }
 
-const juce::String PluginProcessor::getProgramName(int index)
+const juce::String MyPluginProcessor::getProgramName(int index)
 {
     juce::ignoreUnused(index);
     return {};
 }
 
-void PluginProcessor::changeProgramName(int index, const juce::String &newName)
+void MyPluginProcessor::changeProgramName(int index, const juce::String &newName)
 {
     juce::ignoreUnused(index, newName);
 }
 
-void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
+void MyPluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    juce::ignoreUnused(sampleRate, samplesPerBlock);
+  juce::ignoreUnused(samplesPerBlock, sampleRate);
 }
 
-void PluginProcessor::releaseResources()
+void MyPluginProcessor::releaseResources()
 {
 }
 
-bool PluginProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const
+bool MyPluginProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const
 {
 #if JucePlugin_IsMidiEffect
     juce::ignoreUnused(layouts);
@@ -114,29 +116,46 @@ bool PluginProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const
 #endif
 }
 
-void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
+template <int Channel, typename BufferView, typename OscData>
+constexpr auto update_channel(BufferView& buffer, OscData& osc_data) {
+    auto* data = buffer.getWritePointer(Channel);
+    for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
+        auto next_phase = pond::osc::next_phase<float>(osc_data);
+        osc_data.phase = next_phase;
+        data[sample] = std::sin(next_phase);
+    }
+}
+
+
+void MyPluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                    juce::MidiBuffer &midiMessages)
 {
-    juce::ignoreUnused(midiMessages);
+//     update_channel<0>(buffer, left_osc_data);
+//     update_channel<1>(buffer, right_osc_data);
+
+    for (int i = 0; i < buffer.getNumSamples(); ++i) {
+        left_buffer.push(buffer.getSample(0, i));
+        right_buffer.push(buffer.getSample(1, i));
+    }
 }
 
 //==============================================================================
-bool PluginProcessor::hasEditor() const
+bool MyPluginProcessor::hasEditor() const
 {
     return true; // (change this to false if you choose to not supply an editor)
 }
 
-juce::AudioProcessorEditor *PluginProcessor::createEditor()
+juce::AudioProcessorEditor *MyPluginProcessor::createEditor()
 { // Use generic gui for editor for now
     return new PluginEditor(*this);
 }
 
 //==============================================================================
-void PluginProcessor::getStateInformation(juce::MemoryBlock &destData)
+void MyPluginProcessor::getStateInformation(juce::MemoryBlock &destData)
 {
 }
 
-void PluginProcessor::setStateInformation(const void *data, int sizeInBytes)
+void MyPluginProcessor::setStateInformation(const void *data, int sizeInBytes)
 {
 }
 
@@ -144,5 +163,5 @@ void PluginProcessor::setStateInformation(const void *data, int sizeInBytes)
 // This creates new instances of the plugin..
 juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter()
 {
-    return new PluginProcessor();
+    return new MyPluginProcessor();
 }
