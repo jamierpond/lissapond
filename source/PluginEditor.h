@@ -7,7 +7,7 @@ struct LissDisplay : juce::Component, juce::Timer {
     setOpaque(true);
     startTimerHz(60);
 
-    auto setup_slider = [this] (juce::Slider& slider, juce::String name) {
+    auto setup_slider = [this] (juce::Slider& slider, juce::String name, double init_value = 0.5) {
       slider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
       addAndMakeVisible(slider);
       slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 100, 20);
@@ -15,11 +15,11 @@ struct LissDisplay : juce::Component, juce::Timer {
       slider.setNormalisableRange(juce::NormalisableRange<double>(0.0, 1.0, 0.01));
     };
 
-    setup_slider(red_decay_slider, "Red Decay");
-    setup_slider(green_decay_slider, "Green Decay");
-    setup_slider(blue_decay_slider, "Blue Decay");
-    setup_slider(alpha_decay_slider, "Alpha Decay");
-    setup_slider(dot_size_slider, "Radius");
+    setup_slider(dot_size_slider, "Radius", 0.1);
+    setup_slider(red_decay_slider, "Red Decay", 0.1);
+    setup_slider(green_decay_slider, "Green Decay", 0.25);
+    setup_slider(blue_decay_slider, "Blue Decay", 0.21);
+    setup_slider(alpha_decay_slider, "Alpha Decay", 0.17);
 
     red_decay_slider.onValueChange = [this] {
       red_decay = red_decay_slider.getValue();
@@ -48,7 +48,8 @@ struct LissDisplay : juce::Component, juce::Timer {
       green_decay = 0.5f,
       blue_decay = 0.5f,
       alpha_decay = 0.5f;
-    int num_samples = 1 << 10;
+
+    int num_samples = 1 << 12;
 
     juce::Slider
       dot_size_slider,
@@ -60,8 +61,11 @@ struct LissDisplay : juce::Component, juce::Timer {
 
 
   void resized() override {
+      // a^2 + b^2 = c^2
       auto min_sz = std::min(getWidth(), getHeight());
-      image = std::make_unique<juce::Image>(juce::Image::PixelFormat::RGB, min_sz, min_sz, true);
+      auto pow2 = std::pow(min_sz, 2);
+      auto sz = std::sqrt(pow2 / 2);
+      image = std::make_unique<juce::Image>(juce::Image::PixelFormat::RGB, sz, sz, true);
 
       juce::Rectangle<int> area = getLocalBounds();
 
@@ -86,6 +90,7 @@ struct LissDisplay : juce::Component, juce::Timer {
 
   MyPluginProcessor& audio_processor;
   void paint (juce::Graphics& g) override {
+    g.fillAll(juce::Colours::black);
     if (!image) {
       return;
     }
@@ -102,9 +107,10 @@ struct LissDisplay : juce::Component, juce::Timer {
         auto g = pixel.getGreen();
         auto b = pixel.getBlue();
 
-        r *= 0.6f;
-        g *= 0.6f;
-        b *= 0.6f;
+        auto ratio = 0.95f;
+        r *= ratio;
+        g *= ratio;
+        b *= ratio;
 
         image->setPixelAt(x, y, juce::Colour(r, g, b));
       }
