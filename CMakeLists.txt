@@ -27,6 +27,7 @@ if (UNIX AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
  add_definitions(${WEBKIT2_CFLAGS_OTHER})
 endif()
 
+
 # General setup
 set(PROJECT_NAME "lissapond")
 set(CURRENT_VERSION "0.0.1")
@@ -122,7 +123,10 @@ target_link_libraries("${PROJECT_NAME}" PRIVATE
         juce::juce_recommended_warning_flags
 )
 
+set(ZOO_INCLUDE_DIR "./modules/external/zoo/inc")
+
 # Ensure the main project knows where its sources are
 target_include_directories("${PROJECT_NAME}" PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/source"
+        "${ZOO_INCLUDE_DIR}"
 )
